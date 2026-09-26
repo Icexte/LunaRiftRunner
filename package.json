@@ -1,0 +1,19 @@
+{
+  "name": "luna-cloud-love-runner",
+  "version": "3.0.0",
+  "private": true,
+  "scripts": {
+    "build": "echo ready",
+    "cap:android": "npx cap sync android",
+    "cap:ios": "npx cap sync ios"
+  },
+  "dependencies": {
+    "@capacitor/core": "^7.4.3",
+    "@capacitor/android": "^7.4.3",
+    "@capacitor/ios": "^7.4.3"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^7.4.3"
+  },
+  "description": "Luna Cloud Love Runner using the supplied cloud-romance game art as the playable background."
+}

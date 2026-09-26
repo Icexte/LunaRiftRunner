@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>Luna: Cloud Love Runner</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;background:#080719;color:#fff;font-family:system-ui,-apple-system,Segoe UI,sans-serif;overflow-x:hidden}
+#app{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:8px}.shell{width:min(1100px,100%);position:relative;border:1px solid #ffffff30;border-radius:24px;overflow:hidden;box-shadow:0 25px 90px #000b;background:#101026}
+#top{position:absolute;z-index:5;top:10px;left:10px;right:10px;display:flex;justify-content:space-between;gap:8px;pointer-events:none}.pill{padding:9px 13px;border-radius:18px;background:#140e2dcc;border:1px solid #ffffff35;backdrop-filter:blur(8px);font-weight:800;box-shadow:0 8px 25px #0005}
+#screen{position:relative}.panel{min-height:620px;display:flex;align-items:center;justify-content:center;text-align:center}.menu{width:min(650px,92%);padding:45px 20px;background:linear-gradient(145deg,#160e31dd,#241440dd);border:1px solid #ffffff30;border-radius:28px;box-shadow:0 20px 80px #0008}.logo{font-size:clamp(40px,8vw,78px);font-weight:950;letter-spacing:-4px;background:linear-gradient(90deg,#8be7ff,#f7a1e5,#fff);color:transparent;background-clip:text;-webkit-background-clip:text}.subtitle{color:#e5d5f4;margin:4px 0 24px}.heartHero{font-size:92px;animation:float 2.2s ease-in-out infinite;filter:drop-shadow(0 15px 20px #0008)}@keyframes float{50%{transform:translateY(-12px)}}
+input{width:min(380px,100%);padding:15px 17px;border-radius:14px;border:1px solid #ffffff35;background:#090a18aa;color:white;font-size:17px;outline:none}button{font:inherit}.primary,.secondary{border:0;border-radius:15px;padding:13px 22px;font-weight:900;cursor:pointer;margin:7px}.primary{background:linear-gradient(90deg,#7bdcff,#ff93dc);color:#170b26}.secondary{background:#292440;color:#fff;border:1px solid #ffffff22}
+#gameCanvas{display:block;width:100%;aspect-ratio:16/9;background:#20143b;touch-action:none}#controls{display:none;justify-content:space-between;padding:9px;background:#100d20cc}.grp{display:flex;gap:9px}.touch{width:62px;height:50px;border:1px solid #ffffff35;border-radius:15px;background:#211a3dcc;color:white;font-size:22px;font-weight:900;touch-action:none}
+#love{display:none;min-height:620px;padding:35px 18px;text-align:center;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 10%,#7b3f83,#2a153b 48%,#10091b)}#love.show{display:flex}.loveCard{max-width:700px;padding:28px;border-radius:26px;background:#170e29cc;border:1px solid #ffffff2e;box-shadow:0 20px 80px #0008}.couple{font-size:88px;animation:heart 1.2s ease-in-out infinite}@keyframes heart{50%{transform:scale(1.08)}}.loveCard h1{font-size:clamp(30px,6vw,54px);margin:6px 0}.loveCard p{font-size:18px;line-height:1.6;color:#eee0f4}.ach{display:none;margin:18px auto;padding:16px;border:1px solid #ff9ee1;border-radius:15px;background:#25143b;max-width:470px}.ach.show{display:block}.tiny{color:#b7a9c7;font-size:13px}.hidden{display:none!important}
+</style>
+</head>
+<body><div id="app"><div class="shell">
+<div id="top" class="hidden"><div class="pill">💗 <b id="score">0</b>/12 corações</div><div class="pill">❤️ <b id="lives">3</b></div><div class="pill" id="phase">Fase 1/3</div></div>
+<div id="screen">
+<section id="menu" class="panel"><div class="menu"><div class="heartHero">☁️💗☁️</div><div class="logo">LUNA</div><div class="subtitle">CLOUD LOVE RUNNER</div><p>Agora o mundo das nuvens virou uma aventura jogável. Corra pelos céus, pegue os corações e chegue ao portal.</p><p><b>Qual é o nome da pessoa especial?</b></p><input id="name" maxlength="28" placeholder="Digite o nome aqui"><div><button class="primary" id="start">▶ COMEÇAR</button></div><p class="tiny">Setas / A-D para andar · Espaço para pular · Celular: botões na tela</p></div></section>
+<canvas id="gameCanvas" class="hidden" width="960" height="540"></canvas>
+<div id="controls"><div class="grp"><button class="touch" id="L">◀</button><button class="touch" id="R">▶</button></div><div class="grp"><button class="touch" id="J">▲</button><button class="touch" id="pause">Ⅱ</button></div></div>
+<section id="love"><div class="loveCard"><div class="couple">👩🏻‍🚀💗🧑🏻</div><h1 id="loveTitle">A última nuvem...</h1><p id="loveText"></p><div id="choices"><button class="primary" id="yes">💗 SIM!</button><button class="secondary" id="no">Ainda não</button></div><div id="ach" class="ach"><div style="font-size:38px">🏆💗</div><b>CONQUISTA DESBLOQUEADA</b><p>Para sempre nós dois.</p><div class="tiny">A aventura agora é em dupla.</div></div><button class="secondary" id="again">↻ Jogar novamente</button></div></section>
+</div></div></div>
+<script>
+(()=>{
+const $=id=>document.getElementById(id),c=$('gameCanvas'),ctx=c.getContext('2d'),W=960,H=540;
+const bg=new Image();bg.src='assets/cloud-love-world.png';
+let playerName='',phase=1,score=0,lives=3,paused=false,gameOver=false,anim=0,cam=0,audio=null,beat=null;
+const key={l:0,r:0,j:0};
+const worlds=[
+ {start:0,end:1450,plats:[{x:0,y:440,w:360,h:42},{x:455,y:390,w:470,h:42},{x:1010,y:430,w:310,h:42},{x:1290,y:350,w:240,h:42}],goal:{x:1390,y:270}},
+ {start:220,end:1536,plats:[{x:0,y:445,w:300,h:42},{x:390,y:390,w:480,h:42},{x:940,y:430,w:320,h:42},{x:1210,y:350,w:300,h:42}],goal:{x:1400,y:270}},
+ {start:360,end:1536,plats:[{x:0,y:440,w:300,h:42},{x:380,y:390,w:450,h:42},{x:860,y:435,w:310,h:42},{x:1150,y:350,w:380,h:42}],goal:{x:1410,y:270}}
+];
+let p={x:80,y:360,w:34,h:52,vx:0,vy:0,on:false,face:1};let hearts=[],enemies=[],goal={};
+function music(){if(audio)return;try{audio=new (window.AudioContext||window.webkitAudioContext)();const master=audio.createGain();master.gain.value=.035;master.connect(audio.destination);const notes=[392,523.25,659.25,523.25,440,587.33,698.46,587.33];let i=0;beat=setInterval(()=>{if(paused)return;const o=audio.createOscillator(),g=audio.createGain();o.type='sine';o.frequency.value=notes[i++%notes.length];g.gain.setValueAtTime(.0001,audio.currentTime);g.gain.exponentialRampToValueAtTime(.08,audio.currentTime+.04);g.gain.exponentialRampToValueAtTime(.0001,audio.currentTime+.5);o.connect(g);g.connect(master);o.start();o.stop(audio.currentTime+.52)},500)}catch(e){}}
+function sfx(f=600){if(!audio)return;const o=audio.createOscillator(),g=audio.createGain();o.frequency.value=f;g.gain.value=.04;o.connect(g);g.connect(audio.destination);o.start();o.stop(audio.currentTime+.1)}
+function resetWorld(){const w=worlds[phase-1];p={x:75+phase*5,y:350,w:34,h:52,vx:0,vy:0,on:false,face:1};cam=0;gameOver=false;hearts=[];enemies=[];for(let i=0;i<4;i++){const q=w.plats[(i+1)%w.plats.length];hearts.push({x:q.x+q.w*.35,y:q.y-28,t:0});}for(let i=0;i<2;i++){const q=w.plats[(i+1)%w.plats.length];enemies.push({x:q.x+q.w*.65,y:q.y-42,w:34,h:42,vx:i?1.1:-1.1,min:q.x,max:q.x+q.w-34,dead:false});}goal={x:w.goal.x,y:w.goal.y,w:55,h:75};hud()}
+function hud(){$('score').textContent=score;$('lives').textContent=lives;$('phase').textContent=`Fase ${phase}/3`}
+function hit(a,b){return a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y}
+function respawn(){lives--;hud();sfx(140);if(lives<=0){gameOver=true;return}p.x=70;p.y=320;p.vx=p.vy=0}
+function update(){anim++;if(paused||gameOver)return;const w=worlds[phase-1];p.vx=(key.r?4.4:0)-(key.l?4.4:0);if(p.vx)p.face=Math.sign(p.vx);if(key.j&&p.on){p.vy=-11; p.on=false;sfx(680)}key.j=0;p.vy=Math.min(15,p.vy+.52);let nx=p.x+p.vx,ny=p.y+p.vy;p.on=false;for(const q of w.plats){if(nx+p.w>q.x&&nx<q.x+q.w&&p.y+p.h<=q.y+5&&ny+p.h>=q.y&&p.vy>=0){ny=q.y-p.h;p.vy=0;p.on=true;}}p.x=nx;p.y=ny;if(p.y>590){respawn();return}for(const h of hearts){if(!h.t&&Math.hypot((p.x+17)-h.x,(p.y+25)-h.y)<35){h.t=1;score++;hud();sfx(950)}}for(const e of enemies){if(e.dead)continue;e.x+=e.vx;if(e.x<e.min||e.x>e.max)e.vx*=-1;if(hit(p,e)){if(p.vy>2){e.dead=true;p.vy=-7;sfx(210)}else{respawn();return}}}if(hit(p,goal)){sfx(1100);if(phase<3){phase++;resetWorld()}else{gameOver=true;showLove()}}cam=Math.max(0,Math.min(576,p.x-300))}
+function drawPlayer(x,y){ctx.save();ctx.translate(x,y+Math.sin(anim*.2)*1.5);ctx.scale(p.face,1);ctx.fillStyle='#151323';ctx.beginPath();ctx.arc(17,11,14,0,7);ctx.fill();ctx.fillStyle='#dca58f';ctx.beginPath();ctx.arc(17,13,10,0,7);ctx.fill();ctx.fillStyle='#18213a';ctx.beginPath();ctx.arc(17,8,13,3.1,6.2);ctx.fill();ctx.fillStyle=phase===3?'#ff79cb':'#5fd5ff';ctx.beginPath();ctx.roundRect(5,22,24,25,7);ctx.fill();ctx.fillStyle='#fff';ctx.fillRect(11,25,12,5);ctx.fillStyle='#202033';ctx.fillRect(7,46,9,8);ctx.fillRect(20,46,9,8);ctx.fillStyle='#dca58f';ctx.fillRect(-2,27,7,15);ctx.fillRect(29,27,7,15);ctx.fillStyle='#ff9edc';ctx.beginPath();ctx.arc(17,35,4,0,7);ctx.fill();ctx.restore()}
+function draw(){ctx.clearRect(0,0,W,H);if(bg.complete){const scale=H/1024;const dw=1536*scale;ctx.save();ctx.translate(-cam,0);ctx.drawImage(bg,0,0,1536,1024,0,0,dw,H);ctx.restore();}else{ctx.fillStyle='#dba5e8';ctx.fillRect(0,0,W,H)}
+ctx.save();ctx.translate(-cam,0);const w=worlds[phase-1];for(const q of w.plats){ctx.fillStyle='rgba(255,255,255,.02)';ctx.fillRect(q.x,q.y,q.w,q.h);ctx.strokeStyle='#ffd9fa99';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(q.x,q.y+2);ctx.lineTo(q.x+q.w,q.y+2);ctx.stroke();}
+for(const h of hearts)if(!h.t){ctx.save();ctx.translate(h.x,h.y+Math.sin(anim*.13+h.x)*5);ctx.fillStyle='#ff74c9';ctx.shadowColor='#fff';ctx.shadowBlur=16;ctx.font='32px serif';ctx.textAlign='center';ctx.fillText('♥',0,0);ctx.restore()}
+for(const e of enemies)if(!e.dead){ctx.fillStyle='#26163a';ctx.beginPath();ctx.roundRect(e.x,e.y,e.w,e.h,10);ctx.fill();ctx.fillStyle='#ff5fae';ctx.fillRect(e.x+8,e.y+11,7,7);ctx.fillRect(e.x+20,e.y+11,7,7);ctx.fillStyle='#fff';ctx.fillRect(e.x+10,e.y+25,15,3)}
+ctx.save();ctx.translate(goal.x+28,goal.y+38);ctx.strokeStyle='#ffb4eb';ctx.lineWidth=8;ctx.shadowColor='#ff8edc';ctx.shadowBlur=22;ctx.beginPath();ctx.arc(0,0,30+Math.sin(anim*.12)*3,0,7);ctx.stroke();ctx.restore();drawPlayer(p.x,p.y);ctx.restore();
+if(gameOver&&!$('love').classList.contains('show')){ctx.fillStyle='#170b25bb';ctx.fillRect(0,0,W,H);ctx.fillStyle='#fff';ctx.textAlign='center';ctx.font='900 40px system-ui';ctx.fillText('FIM DE JOGO',W/2,245);ctx.font='18px system-ui';ctx.fillText('Toque em COMEÇAR para tentar novamente',W/2,282)}
+if(paused){ctx.fillStyle='#160b26aa';ctx.fillRect(0,0,W,H);ctx.fillStyle='#fff';ctx.textAlign='center';ctx.font='900 40px system-ui';ctx.fillText('PAUSADO',W/2,255)}}
+function showLove(){$('love').classList.add('show');$('loveText').innerHTML=`<b>${playerName||'Meu amor'}</b>, você atravessou o céu inteiro comigo. ☁️💗<br><br>Agora só falta uma pergunta:<br><br><b>Você quer namorar comigo?</b><br>Quero continuar vivendo todas as próximas fases da vida ao seu lado.`}
+function loop(){update();draw();requestAnimationFrame(loop)}
+function bind(id,n){const b=$(id),on=e=>{e.preventDefault();key[n]=1},off=e=>{e.preventDefault();key[n]=0};['pointerdown','touchstart'].forEach(ev=>b.addEventListener(ev,on,{passive:false}));['pointerup','pointercancel','pointerleave','touchend'].forEach(ev=>b.addEventListener(ev,off,{passive:false}))}
+bind('L','l');bind('R','r');bind('J','j');
+$('pause').onclick=()=>{paused=!paused;$('pause').textContent=paused?'▶':'Ⅱ'};
+$('start').onclick=()=>{playerName=$('name').value.trim();music();phase=1;score=0;lives=3;$('menu').classList.add('hidden');$('top').classList.remove('hidden');$('gameCanvas').classList.remove('hidden');$('controls').style.display='flex';resetWorld()};
+$('yes').onclick=()=>{$('loveTitle').textContent=`💗 ${playerName||'Meu amor'}, nossa próxima aventura começa agora!`;$('loveText').innerHTML='Você aceitou! Que todas as nossas próximas fases sejam cheias de carinho, risadas e momentos inesquecíveis. 💗';$('choices').classList.add('hidden');$('ach').classList.add('show')};
+$('no').onclick=()=>{$('loveText').innerHTML=`Tudo bem, <b>${playerName||'meu amor'}</b>. 💗 O mais importante é você ser sincero(a).`};
+$('again').onclick=()=>location.reload();
+addEventListener('keydown',e=>{if(e.code==='ArrowLeft'||e.code==='KeyA')key.l=1;if(e.code==='ArrowRight'||e.code==='KeyD')key.r=1;if(e.code==='Space'||e.code==='ArrowUp')key.j=1;if(e.code==='Escape')paused=!paused});addEventListener('keyup',e=>{if(e.code==='ArrowLeft'||e.code==='KeyA')key.l=0;if(e.code==='ArrowRight'||e.code==='KeyD')key.r=0});
+loop();
+})();
+</script></body></html>

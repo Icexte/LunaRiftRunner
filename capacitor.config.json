@@ -1,0 +1,6 @@
+{
+  "appId": "com.ice.lunariftrunner",
+  "appName": "Luna Rift Runner",
+  "webDir": "www",
+  "bundledWebRuntime": false
+}

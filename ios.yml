@@ -1,0 +1,17 @@
+name: iOS Simulator
+on: {workflow_dispatch: {}}
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: 22, cache: npm}
+      - run: npm install
+      - run: npx cap add ios
+      - run: npx cap sync ios
+      - working-directory: ios/App
+        run: xcodebuild -workspace App.xcworkspace -scheme App -configuration Debug -sdk iphonesimulator -derivedDataPath build CODE_SIGNING_ALLOWED=NO
+      - run: ditto -c -k --sequesterRsrc --keepParent ios/App/build/Build/Products/Debug-iphonesimulator/App.app LunaRiftRunner-iOS-Simulator.zip
+      - uses: actions/upload-artifact@v4
+        with: {name: luna-cloud-love-runner-ios-simulator, path: LunaRiftRunner-iOS-Simulator.zip}
